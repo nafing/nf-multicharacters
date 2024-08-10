@@ -1,0 +1,1 @@
+exports['nf-core']:CheckVersion("nf-multicharacters")
