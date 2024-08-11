@@ -20,6 +20,7 @@ type Config = {
     [key: string]: string;
   };
   locale: any;
+  nationalities: string[];
 };
 
 interface StateCharacters {

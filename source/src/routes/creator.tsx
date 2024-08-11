@@ -15,24 +15,16 @@ import { useConfig, emitNet, useToggle } from "@/hooks";
 
 export const Route = createFileRoute("/creator")({
   component: Creator,
-  gcTime: 0,
-  shouldReload: false,
-  loader: async () => {
-    return await fetch("https://countriesnow.space/api/v0.1/countries/")
-      .then((response) => response.json())
-      .then((data) => data.data.map((country: any) => country.country));
-  },
 });
 
 function Creator() {
-  const countries = Route.useLoaderData();
   const { cid, disableCancel } = Route.useSearch() as {
     cid: number;
     disableCancel: boolean;
   };
 
   const { setOpen } = useToggle();
-  const { getLocale } = useConfig();
+  const { config, getLocale } = useConfig();
 
   const maxDate = () => {
     const date = new Date();
@@ -47,7 +39,7 @@ function Creator() {
       firstname: "",
       lastname: "",
       birthdate: maxDate(),
-      nationality: countries[0],
+      nationality: config.nationalities[0],
       gender: "male",
       terms_of_server: false,
     },
@@ -179,7 +171,7 @@ function Creator() {
                 backgroundColor: rgba("#242424", 0.5),
               },
             }}
-            data={countries}
+            data={config.nationalities}
             key={form.key("nationality")}
             {...form.getInputProps("nationality")}
             searchable

@@ -1,3 +1,6 @@
+local characterDataTables = require '@qbx_core.config.server'.characterDataTables
+local starterItems = require '@qbx_core.config.shared'.starterItems
+
 lib.addCommand('logout', {
     help = 'Change character',
     params = {
@@ -11,8 +14,6 @@ lib.addCommand('logout', {
     restricted = 'group.admin'
 }, function(source, args)
     exports.qbx_core:Logout(args.target or source)
-
-    TriggerClientEvent('nf-multicharacters:client:closeMenu', args.target or source, 'load_characters')
 end)
 
 RegisterNetEvent('nf-multicharacters:server:showCharacters', function()
@@ -29,7 +30,6 @@ RegisterNetEvent('nf-multicharacters:server:showCharacters', function()
             TriggerClientEvent('nf-multicharacters:client:createCharacter', _source)
             return
         end
-
 
         local characters = {}
 
@@ -64,8 +64,8 @@ local function giveStarterItems(source)
     while not exports.ox_inventory:GetInventory(source) do
         Wait(100)
     end
-    for i = 1, #Config.StarterItems do
-        local item = Config.StarterItems[i]
+    for i = 1, #starterItems do
+        local item = starterItems[i]
         if item.metadata and type(item.metadata) == 'function' then
             exports.ox_inventory:AddItem(source, item.name, item.amount, item.metadata(source))
         else
@@ -74,20 +74,51 @@ local function giveStarterItems(source)
     end
 end
 
-RegisterNetEvent('nf-multicharacters:server:deleteCharacter', function(payload)
+
+local function doesTableExist(tableName)
+    local tbl = MySQL.single.await(('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_NAME = \'%s\' AND TABLE_SCHEMA in (SELECT DATABASE())')
+        :format(tableName))
+    return tbl['COUNT(*)'] > 0
+end
+
+local function deletePlayer(citizenId)
+    local query = 'DELETE FROM %s WHERE %s = ?'
+    local queries = {}
+
+    for i = 1, #characterDataTables do
+        local data = characterDataTables[i]
+        local tableName = data[1]
+        local columnName = data[2]
+        if doesTableExist(tableName) then
+            queries[#queries + 1] = {
+                query = query:format(tableName, columnName),
+                values = {
+                    citizenId,
+                }
+            }
+        else
+            warn(('Table %s does not exist in database, please remove it from qbx_core/config/server.lua or create the table')
+                :format(tableName))
+        end
+    end
+
+    local success = MySQL.transaction.await(queries)
+    return not not success
+end
+
+
+RegisterNetEvent('nf-multicharacters:server:deleteCharacter', function(citizenId)
     local _source = source
 
     if not _source then
         return
     end
 
-    exports.qbx_core:DeleteCharacter(payload)
-
-    Wait(1000)
-
-    TriggerClientEvent('nf-multicharacters:client:closeMenu', _source, 'load_characters')
+    if deletePlayer(citizenId) then
+        lib.print.info(('%s has deleted a character'):format(GetPlayerName(_source)))
+        TriggerClientEvent('nf-multicharacters:client:closeMenu', _source, 'load_characters')
+    end
 end)
-
 
 
 RegisterNetEvent('nf-multicharacters:server:createCharacter', function(payload)
@@ -105,10 +136,6 @@ RegisterNetEvent('nf-multicharacters:server:createCharacter', function(payload)
     if not success then return end
 
     giveStarterItems(_source)
-
-    if GetResourceState('nf-spawn') == 'missing' then
-        exports.qbx_core:SetPlayerBucket(_source, 0)
-    end
 
     lib.print.info(('%s has created a character'):format(GetPlayerName(_source)))
 

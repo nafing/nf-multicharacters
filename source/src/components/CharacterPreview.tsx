@@ -1,4 +1,4 @@
-import { emitNet, useCharacters, useConfig, useToggle } from "@/hooks";
+import { emitNet, useConfig, useToggle } from "@/hooks";
 import {
   Burger,
   Button,
@@ -41,7 +41,6 @@ export const CharacterPreview = ({
 }) => {
   const { setOpen } = useToggle();
   const { getLocale } = useConfig();
-  const { setCharacters } = useCharacters();
   const [opened, handler] = useDisclosure();
   const [deleteOpened, deleteHandler] = useDisclosure();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -299,14 +298,6 @@ export const CharacterPreview = ({
               emitNet({
                 eventName: "deleteCharacter",
                 payload: character.citizenid,
-                handler: (payload: Characters) => {
-                  setCharacters(payload);
-
-                  deleteHandler.close();
-                  onClick(null);
-
-                  setIsDeleting(false);
-                },
               });
             }}
           >

@@ -12,6 +12,7 @@ export const useConfig = create<StateConfig>((set, get) => ({
       main: "#09ffc1",
     },
     locale: {},
+    nationalities: [],
   },
 
   setConfig: (config) => set({ config }),
