@@ -19,6 +19,17 @@ RegisterNetEvent('nf-multicharacters:client:createCharacter', function()
 end)
 
 RegisterNetEvent('nf-multicharacters:client:showCharacters', function(characters)
+    DoScreenFadeOut(0)
+
+    local interiorId = GetInteriorAtCoords(Config.CreatorCoords.x, Config.CreatorCoords.y, Config.CreatorCoords.z)
+    local isInteriorReady = lib.waitFor(function()
+        return IsInteriorReady(interiorId)
+    end)
+
+    if not isInteriorReady then
+        Citizen.Wait(1000)
+    end
+
     Characters.createdCamera = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
     SetCamActive(Characters.createdCamera, true)
     RenderScriptCams(true, false, 0, true, true)
