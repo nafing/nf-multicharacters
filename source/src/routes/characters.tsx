@@ -3,7 +3,7 @@ import { emitNet, useCharacters, useConfig } from "@/hooks";
 import { Collapse, Tooltip, Paper, rgba, Center } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/characters")({
   component: Characters,
@@ -23,6 +23,14 @@ function Characters() {
 
     return unusedCid ?? 1;
   };
+
+  useEffect(() => {
+    setActiveCid(null);
+
+    emitNet({
+      eventName: "setActiveCharacter",
+    });
+  }, [characters]);
 
   return (
     <OutletWrapper

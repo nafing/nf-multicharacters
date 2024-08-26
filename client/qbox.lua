@@ -6,7 +6,7 @@ RegisterNetEvent('nf-multicharacters:client:createCharacter', function()
     Characters.createdCamera = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
     SetCamActive(Characters.createdCamera, true)
     RenderScriptCams(true, false, 0, true, true)
-    Characters:SetModel("male")
+    Characters:SetModel('male')
 
     SetEntityCoords(PlayerPedId(), Config.CreatorCoords.x, Config.CreatorCoords.y, Config.CreatorCoords.z, false, false,
         false, false)
@@ -18,33 +18,22 @@ RegisterNetEvent('nf-multicharacters:client:createCharacter', function()
     })
 end)
 
-RegisterNetEvent('nf-multicharacters:client:showCharacters', function(characters)
+RegisterNetEvent('nf-multicharacters:client:showCharacters', function(payload)
     DoScreenFadeOut(0)
+    Characters:SetModel('male')
+    Characters:SpawnPeds(payload)
 
-    local interiorId = GetInteriorAtCoords(Config.CreatorCoords.x, Config.CreatorCoords.y, Config.CreatorCoords.z)
-    local isInteriorReady = lib.waitFor(function()
-        return IsInteriorReady(interiorId)
+    InitLoad(function()
+        Characters.createdCamera = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
+        SetCamActive(Characters.createdCamera, true)
+        RenderScriptCams(true, false, 0, true, true)
+
+        SetNuiFocus(true, true)
+        SendNUIMessage({
+            eventName = 'showCharacters',
+            payload = payload,
+        })
     end)
-
-    if not isInteriorReady then
-        Citizen.Wait(1000)
-    end
-
-    Characters.createdCamera = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
-    SetCamActive(Characters.createdCamera, true)
-    RenderScriptCams(true, false, 0, true, true)
-    Characters:SetModel("male")
-    Characters:SpawnPeds(characters)
-
-    SetEntityCoords(PlayerPedId(), Config.CreatorCoords.x, Config.CreatorCoords.y, Config.CreatorCoords.z, false, false,
-        false, false)
-    SetEntityHeading(PlayerPedId(), Config.CreatorCoords.w)
-
-    SetNuiFocus(true, true)
-    SendNUIMessage({
-        eventName = 'showCharacters',
-        payload = characters,
-    })
 end)
 
 RegisterNetEvent('nf-multicharacters:client:closeMenu', function(menuType)
@@ -55,7 +44,7 @@ RegisterNetEvent('nf-multicharacters:client:closeMenu', function(menuType)
     if menuType == 'load_characters' then
         TriggerServerEvent('nf-multicharacters:server:showCharacters')
     elseif menuType == 'skin_changer' then
-        DoScreenFadeIn(150)
+        DoScreenFadeIn(0)
         exports['nf-skin']:OpenCreator(function()
             DoScreenFadeOut(0)
             exports['nf-spawn']:OpenSpawn(true)

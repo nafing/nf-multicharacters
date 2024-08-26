@@ -1,5 +1,7 @@
 Characters = {
     isLoaded = false,
+    pedsSpawned = false,
+
     createdCamera = nil,
     createdPeds = {},
 }
@@ -16,16 +18,34 @@ RegisterNuiCallback('isLoaded', function(_, cb)
         ShutdownLoadingScreen()
         ShutdownLoadingScreenNui()
 
-        Config.UI.maxCharacters = Config.MaxCharacters
 
-        TriggerServerEvent('nf-multicharacters:server:showCharacters')
+        Config.UI.maxCharacters = Config.MaxCharacters
 
         cb({
             isLoaded = true,
             config = Config.UI,
         })
+
+        TriggerServerEvent('nf-multicharacters:server:showCharacters')
     end
 end)
+
+function InitLoad(cb)
+    local coords = Config.CreatorCoords
+    local playerPed = PlayerPedId()
+    SetEntityCoords(playerPed, coords.x, coords.y, coords.z, false, false, false, false)
+    SetEntityHeading(playerPed, coords.w)
+    local interiorId = GetInteriorAtCoords(coords.x, coords.y, coords.z)
+    local isReady = lib.waitFor(function()
+        if Characters.isLoaded and Characters.pedsSpawned and IsInteriorReady(interiorId) then
+            return true
+        end
+    end, "Error", false)
+
+    if isReady then
+        cb()
+    end
+end
 
 RegisterNuiCallback('setActiveCharacter', function(payload, cb)
     DoScreenFadeOut(150)
@@ -128,8 +148,8 @@ end
 
 function Characters:SpawnPeds(characters)
     local randomPeds = {
-        'mp_m_freemode_01',
-        'mp_f_freemode_01',
+        `mp_m_freemode_01`,
+        `mp_f_freemode_01`,
     }
 
     for k, v in pairs(Config.SpawnCharacters) do
@@ -140,10 +160,8 @@ function Characters:SpawnPeds(characters)
                 characters[k].citizenid)
         end
 
-
         model = model or randomPeds[math.random(1, #randomPeds)]
         skin = skin or (model == 'mp_m_freemode_01' and Config.SkinMale or Config.SkinFemale)
-
 
         local pedId = Characters:CreatePreviewPed({
             model = model,
@@ -162,6 +180,8 @@ function Characters:SpawnPeds(characters)
             RemoveAnimDict(v.anim[1])
         end
     end
+
+    Characters.pedsSpawned = true
 end
 
 function Characters:CreatePreviewPed(payload, cb)
@@ -186,6 +206,7 @@ function Characters:DestroyPeds()
     end
 
     Characters.createdPeds = {}
+    Characters.pedsSpawned = false
 end
 
 AddEventHandler('onResourceStop', function(resourceName)

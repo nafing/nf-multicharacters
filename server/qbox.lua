@@ -1,7 +1,7 @@
 local characterDataTables = require '@qbx_core.config.server'.characterDataTables
 local starterItems = require '@qbx_core.config.shared'.starterItems
 
-lib.addCommand('logout', {
+lib.addCommand('logout_char', {
     help = 'Change character',
     params = {
         {
@@ -14,6 +14,7 @@ lib.addCommand('logout', {
     restricted = 'group.admin'
 }, function(source, args)
     exports.qbx_core:Logout(args.target or source)
+    lib.print.info(('%s has logged out'):format(GetPlayerName(source)))
 end)
 
 RegisterNetEvent('nf-multicharacters:server:showCharacters', function()
@@ -103,7 +104,7 @@ local function deletePlayer(citizenId)
     end
 
     local success = MySQL.transaction.await(queries)
-    return not not success
+    return success
 end
 
 
